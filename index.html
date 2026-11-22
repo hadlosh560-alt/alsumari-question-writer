@@ -1,1 +1,175 @@
-.index.html
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>السومري دام فيضه - كتابة الأسئلة</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f3f5f8;color:#202b38;margin:0;padding:15px}
+.container{max-width:850px;margin:auto;background:white;padding:20px;border-radius:12px}
+header{text-align:center;border-bottom:2px solid #243b55;padding-bottom:12px;margin-bottom:20px}
+h1{color:#243b55;font-size:25px;margin:8px}
+header p{color:#65758b}
+h2{font-size:19px;color:#243b55}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #ccd3dc;border-radius:7px;font-size:16px;margin:5px 0 12px}
+textarea{min-height:75px}
+label{font-weight:bold;font-size:14px}
+button{border:0;border-radius:7px;padding:12px 17px;margin:5px;cursor:pointer;font-size:15px}
+.primary{background:#243b55;color:white}
+.green{background:#287a55;color:white}
+.gray{background:#e7ebf0;color:#263445}
+.question{border:1px solid #d5dce5;padding:12px;border-radius:8px;margin:12px 0}
+.question p{white-space:pre-wrap;line-height:1.7}
+.actions{text-align:center;margin-top:20px}
+.small{font-size:13px;color:#68778a}
+@media(max-width:550px){.grid{grid-template-columns:1fr}.container{padding:13px}}
+@media print{
+body{background:white;padding:0}
+.container{max-width:none;padding:0}
+.no-print{display:none!important}
+.question{break-inside:avoid}
+input,textarea,select{border:0;padding:3px}
+header{color:black}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>السومري دام فيضه</h1>
+<p>لكتابة الأسئلة وإعداد الامتحانات</p>
+</header>
+
+<section class="no-print">
+<h2>أولاً: معلومات الامتحان</h2>
+<div class="grid">
+<div><label>اسم المدرسة</label><input id="school" placeholder="اسم المدرسة"></div>
+<div><label>اسم المعلم</label><input id="teacher" placeholder="اسم المعلم"></div>
+<div><label>الصف</label><input id="grade" placeholder="مثلاً: الخامس الابتدائي"></div>
+<div><label>المادة</label><input id="subject" placeholder="مثلاً: اللغة الإنجليزية"></div>
+<div><label>العام الدراسي</label><input id="year" value="2026 - 2027"></div>
+<div><label>زمن الامتحان</label><input id="duration" placeholder="مثلاً: ساعة واحدة"></div>
+</div>
+
+<hr>
+<h2>ثانياً: إضافة سؤال</h2>
+<label>نوع السؤال</label>
+<select id="kind">
+<option>أجب عن الأسئلة الآتية</option>
+<option>اختر الإجابة الصحيحة</option>
+<option>صح أو خطأ</option>
+<option>أكمل الفراغات</option>
+<option>ترجم</option>
+<option>رتب الكلمات</option>
+<option>أخرى</option>
+</select>
+<label>نص السؤال</label>
+<textarea id="questionText" placeholder="اكتب السؤال هنا..."></textarea>
+<label>الاختيارات (اختياري، كل اختيار في سطر)</label>
+<textarea id="choices" placeholder="A- ...&#10;B- ...&#10;C- ..."></textarea>
+<label>درجة السؤال</label>
+<input id="marks" type="number" min="0" value="5">
+<button class="primary" onclick="addQuestion()">＋ إضافة السؤال</button>
+<button class="gray" onclick="clearInputs()">مسح الحقول</button>
+</section>
+
+<hr>
+<h2>ثالثاً: ورقة الأسئلة</h2>
+<div id="examInfo"></div>
+<div id="questions"><p class="small">لم تتم إضافة أسئلة بعد.</p></div>
+<div class="actions no-print">
+<button class="green" onclick="saveDraft()">حفظ المسودة</button>
+<button class="primary" onclick="window.print()">طباعة / حفظ PDF</button>
+<button class="gray" onclick="clearAll()">بدء امتحان جديد</button>
+</div>
+<p class="small" style="text-align:center">إعداد: السومري دام فيضه</p>
+</div>
+
+<script>
+let questions=[];
+
+function addQuestion(){
+ const text=document.getElementById('questionText').value.trim();
+ if(!text){alert('اكتب نص السؤال أولاً');return;}
+ questions.push({
+ kind:document.getElementById('kind').value,
+ text:text,
+ choices:document.getElementById('choices').value.trim(),
+ marks:document.getElementById('marks').value||0
+ });
+ render();
+ clearInputs();
+}
+
+function clearInputs(){
+ document.getElementById('questionText').value='';
+ document.getElementById('choices').value='';
+ document.getElementById('marks').value=5;
+}
+
+function render(){
+ const fields=['school','teacher','grade','subject','year','duration'];
+ const labels=['المدرسة','المعلم','الصف','المادة','العام الدراسي','الزمن'];
+ document.getElementById('examInfo').innerHTML=fields.map((f,i)=>
+ '<p><b>'+labels[i]+':</b> '+escapeHTML(document.getElementById(f).value)+'</p>'
+ ).join('');
+ const area=document.getElementById('questions');
+ if(!questions.length){
+ area.innerHTML='<p class="small">لم تتم إضافة أسئلة بعد.</p>';return;
+ }
+ area.innerHTML=questions.map((q,i)=>`
+ <div class="question">
+ <b>${i+1}- ${escapeHTML(q.kind)}</b>
+ <span style="float:left">(${escapeHTML(q.marks)} درجات)</span>
+ <p>${escapeHTML(q.text)}</p>
+ ${q.choices?'<p>'+escapeHTML(q.choices)+'</p>':''}
+ <button class="gray no-print" onclick="removeQuestion(${i})">حذف السؤال</button>
+ </div>`).join('');
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+ }[c]));
+}
+
+function removeQuestion(i){
+ questions.splice(i,1);render();
+}
+
+function saveDraft(){
+ const data={
+ questions:questions,
+ fields:['school','teacher','grade','subject','year','duration']
+ .reduce((o,id)=>(o[id]=document.getElementById(id).value,o),{})
+ };
+ localStorage.setItem('alsumariDraft',JSON.stringify(data));
+ alert('تم حفظ المسودة على هذا الجهاز');
+}
+
+function clearAll(){
+ if(!confirm('هل تريد بدء امتحان جديد ومسح الأسئلة؟'))return;
+ questions=[];
+ ['school','teacher','grade','subject','duration'].forEach(id=>document.getElementById(id).value='');
+ document.getElementById('year').value='2026 - 2027';
+ render();
+}
+
+const oldDraft=localStorage.getItem('alsumariDraft');
+if(oldDraft){
+ try{
+ const data=JSON.parse(oldDraft);
+ questions=data.questions||[];
+ Object.keys(data.fields||{}).forEach(id=>{
+ if(document.getElementById(id))document.getElementById(id).value=data.fields[id];
+ });
+ }catch(e){}
+}
+render();
+</script>
+</body>
+</html>
